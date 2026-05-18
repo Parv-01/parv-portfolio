@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="neb" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#ff5ea8"/>
+      <stop offset="30%" stop-color="#3d1e6e"/>
+      <stop offset="60%" stop-color="#1a0b3a"/>
+      <stop offset="100%" stop-color="#05070d"/>
+    </radialGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e6edf3"/>
+      <stop offset=".5" stop-color="#4f9cf9"/>
+      <stop offset="1" stop-color="#7c4dff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#neb)"/>
+  <g font-family="Inter, sans-serif" fill="#e6edf3">
+    <text x="80" y="220" font-size="84" font-weight="600" letter-spacing="-3" fill="url(#g)">Parv Agarwal</text>
+    <text x="80" y="290" font-size="32" opacity="0.75">AI Researcher · NLP × Quantum × Neuromorphic</text>
+    <text x="80" y="540" font-size="20" opacity="0.5" font-family="JetBrains Mono, monospace">nebula-lab // jra @ ai-nlp-ml lab, iit patna</text>
+  </g>
+</svg>

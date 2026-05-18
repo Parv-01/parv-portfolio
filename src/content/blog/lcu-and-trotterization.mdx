@@ -1,0 +1,54 @@
+---
+title: "LCU and Trotterization: A working engineer's notebook"
+excerpt: "Linear Combination of Unitaries and Trotter–Suzuki, side by side. Where each method shines and where compounding error wins. Notes from Womanium × Wiser 2025."
+date: "2026-03-30"
+readTime: "14 min"
+tags: ["Quantum", "PennyLane"]
+featured: true
+---
+
+# LCU and Trotterization, side by side
+
+Both methods simulate Hamiltonian evolution. They take very different paths to get there, and your choice between them is mostly a question of **circuit depth budget** vs **accuracy budget**.
+
+## Trotterization in one paragraph
+
+Split the Hamiltonian into a sum of terms `H = H1 + H2 + ... + Hk`, then approximate `exp(-iHt)` by alternating `exp(-iHk * dt)` for small `dt`. First-order Trotter has error `O(t^2 / r)` where `r` is the number of slices. Doubling `r` halves the error. Higher-order Suzuki formulas are more efficient asymptotically but cost more gates per slice.
+
+```python
+# PennyLane sketch
+import pennylane as qml
+
+dev = qml.device("default.qubit", wires=4)
+
+@qml.qnode(dev)
+def trotter_step(H_terms, t, slices):
+    for _ in range(slices):
+        for term in H_terms:
+            qml.exp(term, coeff=-1j * t / slices)
+    return qml.state()
+```
+
+## LCU in one paragraph
+
+If `U = a1*V1 + a2*V2 + ... + ak*Vk` with each `Vi` unitary, the *Linear Combination of Unitaries* construction realizes `U` probabilistically using an ancillary "prepare" register and a controlled "select" oracle. With amplitude amplification, you get near-deterministic execution at depth `O(log K)` instead of `O(K)`.
+
+LCU shines on Hamiltonians that decompose into a small number of weighted unitaries->typical for chemistry Hamiltonians after second-quantization.
+
+## Where each method actually wins
+
+| Property            | Trotter          | LCU                          |
+| ------------------- | ---------------- | ---------------------------- |
+| Easy to implement   | yes              | depends                      |
+| Tight error bound   | weak             | strong (block-encoding)      |
+| Depth scaling       | `O(r*t)`         | `O(log K)` + amplification   |
+| Resource overhead   | minimal ancilla  | log ancilla + select oracle  |
+| Best for            | physics, sparse H| chemistry, block-encoded H   |
+
+## My take
+
+For NISQ work today, Trotterization with second-order Suzuki and adaptive step size is what I'd reach for first. LCU pays off the moment you can afford the ancillary register and the select oracle->which is exactly when block-encoding becomes natural in your pipeline.
+
+I built a small comparison harness during Womanium × Wiser 2025. I'll publish the repo with the post-mortem; the takeaway was that for Burgers-like nonlinear PDEs, **Carleman linearization + LCU** beat **direct Trotter** on circuit-depth × shots-to-target-accuracy by a factor of 4-7 depending on the truncation order.
+
+If you want me to walk through the Carleman step specifically, ping me->that's where most engineers get lost.

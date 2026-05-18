@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05060F" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)" />
+
+    <title>Parv Agarwal-AI & Quantum Researcher</title>
+    <meta
+      name="description"
+      content="Parv Agarwal — Junior Research Associate at the AI-NLP-ML Research Lab, IIT Patna. Low-resource NLP, neuromorphic LLMs, quantum-classical hybrids, embedded electronics."
+    />
+    <meta name="author" content="Parv Agarwal" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Parv Agarwal - AI Researcher" />
+    <meta
+      property="og:description"
+      content="Research at the intersection of classical ML, quantum computing and neuromorphic systems."
+    />
+    <meta property="og:image" content="/images/og.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Parv Agarwal - AI Researcher" />
+    <meta
+      name="twitter:description"
+      content="Research at the intersection of classical ML/AI/NLP, quantum computing and seeing possibilities in Neuromorphic systems,Brain Inspired Computing."
+    />
+    <meta name="twitter:image" content="/images/og.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/images/og.svg" />
+
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored || (prefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,144 @@
+/* EasterEggLogo — self-contained styles.
+   All animations use transform/opacity/filter only (GPU compositor). */
+
+.eel-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+  /* The element itself stays sized via inline style (size prop). */
+  /* Will-change is intentionally NOT set in idle state — only during activate. */
+}
+
+.eel-root:focus-visible {
+  outline: 2px solid var(--accent, #8DA2FF);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.eel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transform: translateZ(0); /* promote to its own layer */
+  transition: filter 220ms ease;
+}
+
+.eel-root:hover .eel-img {
+  filter: drop-shadow(0 0 6px var(--accent-glow, rgba(141, 162, 255, 0.4)));
+}
+
+/* Orbital ring overlay — decorative, accessible-hidden */
+.eel-orbit {
+  position: absolute;
+  inset: -6%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.eel-root:hover .eel-orbit {
+  opacity: 0.55;
+}
+
+/* ─── ACTIVATION SEQUENCE ─────────────────────────────────────────────── */
+
+.eel-activating {
+  will-change: transform, filter;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.eel-activating .eel-img {
+  animation: eel-portal 1100ms cubic-bezier(0.65, 0.05, 0.35, 1) forwards;
+}
+
+.eel-activating .eel-orbit {
+  animation: eel-orbit-spin 1100ms cubic-bezier(0.65, 0.05, 0.35, 1) forwards;
+}
+
+@keyframes eel-portal {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1) saturate(1) drop-shadow(0 0 0 transparent);
+  }
+  35% {
+    transform: scale(1.45) rotate(6deg);
+    filter: brightness(1.5) saturate(1.3)
+      drop-shadow(0 0 24px var(--accent, #8DA2FF));
+  }
+  65% {
+    transform: scale(2.6) rotate(14deg);
+    filter: brightness(2.2) saturate(1.4)
+      drop-shadow(0 0 60px var(--accent, #8DA2FF));
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(9) rotate(22deg);
+    filter: brightness(3.6) drop-shadow(0 0 140px #ffffff);
+    opacity: 0;
+  }
+}
+
+@keyframes eel-orbit-spin {
+  0% {
+    opacity: 0.55;
+    transform: rotate(0deg) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(180deg) scale(2);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(360deg) scale(6);
+  }
+}
+
+/* Full-screen flash overlay during the portal phase */
+.eel-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    #ffffff 0%,
+    var(--accent, #8DA2FF) 18%,
+    rgba(0, 0, 0, 0) 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+  animation: eel-flash 1100ms cubic-bezier(0.7, 0, 0.4, 1) forwards;
+}
+
+@keyframes eel-flash {
+  0% { opacity: 0; }
+  55% { opacity: 0; }
+  78% { opacity: 0.75; }
+  100% { opacity: 1; }
+}
+
+/* Reduced motion — skip the cinematic sequence, just fade out quickly. */
+@media (prefers-reduced-motion: reduce) {
+  .eel-activating .eel-img,
+  .eel-activating .eel-orbit,
+  .eel-flash {
+    animation-duration: 220ms !important;
+  }
+  .eel-activating .eel-img {
+    animation: eel-fade-reduced 220ms ease forwards;
+  }
+}
+
+@keyframes eel-fade-reduced {
+  to { opacity: 0; transform: scale(1.1); }
+}

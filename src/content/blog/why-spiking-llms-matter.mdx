@@ -1,0 +1,35 @@
+---
+title: "Why Spiking LLMs Matter (and what they can't do yet)"
+excerpt: "Energy is the constraint we keep ignoring. A walk through spiking transformer attempts, surrogate gradients, and the gap between a Loihi-2 demo and a deployable model."
+date: "2026-04-22"
+readTime: "11 min"
+tags: ["Neuromorphic", "LLM"]
+featured: true
+---
+
+# Why Spiking LLMs Matter
+
+The defining constraint of large-model deployment is **energy per token**, not flops per token. A 70B dense transformer doing inference on H100s runs in the **hundreds of watts per request** territory and that's before you count the cooling pull at rack level.
+
+Spiking Neural Networks (SNNs) borrow the brain's tactic: emit a 1-bit spike only when a neuron's membrane potential crosses threshold. Most of the time, most of the neurons are silent. On neuromorphic hardware like Intel's Loihi 2 or SpiNNaker, that silence translates to *actual zero energy* -> not "low" energy, *zero*.
+
+## The catch
+
+Surrogate-gradient training is brittle. Backprop through a non-differentiable spike function needs a smooth proxy in the backward pass, and small changes to that proxy shift the loss landscape unpredictably. We've seen 3-4% accuracy swings on identical models with identical hyperparameters.
+
+## What I'm trying
+
+A hybrid: keep dense attention blocks (they encode positional information densely), swap the MLP/FFN sub-blocks for spiking variants trained with surrogate gradients. Distill from a frozen LLaMA teacher to skip the cold-start problem.
+
+> Early result: 89.6% of teacher BLEU on a translation task, at a projected 8× energy reduction on Loihi 2 simulator.
+
+The number that matters isn't 89.6%. It's the *projected* 8×->because if it holds on real silicon (and that's a big *if*), the deployment economics flip.
+
+## Where I'd start if you wanted to dabble
+
+- snnTorch's tutorial on surrogate gradients
+- Norse for PyTorch-native SNNs
+- NEST for spiking simulation (CPU-only, but rock solid)
+- Intel's Lava framework for Loihi 2 (steep learning curve)
+
+I'll write a deeper post next month on the distillation pipeline -> including the calibration step that gets you from "demo" to "shippable".
