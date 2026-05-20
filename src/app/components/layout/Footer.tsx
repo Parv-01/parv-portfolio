@@ -60,7 +60,7 @@ export function Footer() {
             className="max-w-[360px]"
             style={{ fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--fg-muted)' }}
           >
-            Building intelligent systems at the intersection of artificial intelligence, quantum computing, neuromorphic engineering and biological cognition {'->'}driven by Research, Curiosity and a Lifelong Pursuit of Learning.
+            Building intelligent systems at the intersection of artificial intelligence, quantum computing, neuromorphic engineering & biological cognition {'->'} driven by Research, Curiosity and a Lifelong Pursuit of Learning.
           </p>
 
           <div className="flex items-center gap-2 mt-2">

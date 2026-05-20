@@ -4,6 +4,7 @@ import { Section } from '../components/layout/Section';
 import { findPost } from '@/content/blog/loader';
 import { ReadingProgress } from '../components/system/ReadingProgress';
 import { NotFound } from './NotFound';
+import { SEO } from '../components/system/SEO';
 
 export function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,6 +15,12 @@ export function BlogPost() {
 
   return (
     <Section padding="default">
+      <SEO
+        title={`${post.title} | Parv Agarwal`}
+        description={post.excerpt}
+        canonicalPath={`/blog/${post.slug}`}
+        ogType="article"
+      />
       <ReadingProgress />
 
       <article className="max-w-[720px] mx-auto flex flex-col gap-6">

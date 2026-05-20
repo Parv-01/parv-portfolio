@@ -14,6 +14,7 @@ import {
   platformDisplayName,
 } from '@/lib/blog/sources.config';
 import type { UnifiedPost, UnifiedPostSource } from '@/lib/blog/types';
+import { SEO } from '../components/system/SEO';
 
 export function Blog() {
   const localPosts = useMemo(() => loadLocalUnified(), []);
@@ -52,6 +53,12 @@ export function Blog() {
 
   return (
     <div>
+      <SEO
+        title="Blog | Parv Agarwal"
+        description="Technical notes on neuromorphic LLMs, low-resource NLP, quantum computing and engineering. Research write-ups, notebooks and implementation-minded essays by Parv Agarwal."
+        canonicalPath="/blog"
+        ogType="website"
+      />
       <PageHero
         eyebrow="Blog"
         title={

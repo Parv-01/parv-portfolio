@@ -404,12 +404,14 @@
   font-size: 1.0625rem;
   line-height: 1.85;
 }
+.post-prose > :first-child { margin-top: 0; }
+.post-prose > :last-child { margin-bottom: 0; }
 .post-prose h1 {
   font-family: var(--font-serif);
   font-size: 2rem;
   font-weight: 500;
   color: var(--fg-primary);
-  margin-top: 2.5rem;
+  margin-top: 2.25rem;
   margin-bottom: 0.75rem;
   letter-spacing: -0.025em;
 }
@@ -454,6 +456,22 @@
   border-radius: 12px;
   padding: 1rem 1.25rem;
   overflow-x: auto;
+  margin: 1.75rem 0;
+}
+.post-prose pre:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 3px;
+}
+.post-prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--border-hairline);
+  margin: 2rem 0;
+}
+.post-prose img {
+  max-width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--border-hairline);
   margin: 1.75rem 0;
 }
 .post-prose pre code {
