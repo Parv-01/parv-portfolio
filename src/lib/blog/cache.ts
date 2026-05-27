@@ -1,12 +1,16 @@
 /**
- * Tiny localStorage cache with a 15-minute TTL. All access is wrapped in
- * try/catch so SSR or privacy-mode environments degrade silently to no-ops.
+ * Tiny localStorage cache for the blog aggregator.
+ *
+ * TTL is intentionally short (5 minutes) so a newly-published external post
+ * shows up on the very next page visit instead of waiting for a slow stale
+ * window. The KEY_PREFIX is versioned ("v2"); bump it whenever you change the
+ * UnifiedPost shape or want every existing visitor to refetch on next load.
  */
 
 type Entry<T> = { data: T; ts: number };
 
-const TTL_MS = 15 * 60 * 1000;
-const KEY_PREFIX = 'parv.blog.cache.v1';
+const TTL_MS = 5 * 60 * 1000;
+const KEY_PREFIX = 'parv.blog.cache.v2';
 
 function safeGet(): Storage | null {
   try {

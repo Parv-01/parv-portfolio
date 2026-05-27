@@ -1,6 +1,13 @@
 /**
  * Runtime fetchers for external blog feeds. Each returns Promise<UnifiedPost[]>
  * and never throws — failures/timeouts/malformed payloads resolve to [].
+ *
+ * Notes on the hardening:
+ *  - `cache: 'no-store'` + `_t=<timestamp>` query bust both browser HTTP cache
+ *    and any conditional-GET path that returns 304 with an empty body.
+ *  - `mode: 'cors'` + `redirect: 'follow'` makes the Hashnode call survive its
+ *    301 -> canonical-URL redirect with CORS headers preserved.
+ *  - Every fetcher short-circuits a 304 to [] so res.json() never blows up.
  */
 
 import { PAYWALLED_MEDIUM_SLUGS } from './paywalled-slugs';
@@ -94,15 +101,23 @@ type HashnodeEdgeNode = {
 export async function fetchHashnode(host: string): Promise<UnifiedPost[]> {
   const { signal, clear } = withTimeout();
   try {
-    const res = await fetch('https://gql.hashnode.com', {
+    // Trailing slash + redirect: 'follow' avoids the 301 that strips CORS.
+    const res = await fetch('https://gql.hashnode.com/', {
       method: 'POST',
       signal,
-      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
       body: JSON.stringify({
         query: 'query Posts($host: String!) { publication(host: $host) { posts(first: 20) { edges { node { id slug title brief publishedAt readTimeInMinutes tags { name } url } } } } }',
         variables: { host },
       }),
     });
+    if (res.status === 304) return [];
     if (!res.ok) throw new Error('hashnode http ' + res.status);
     const json = (await res.json()) as {
       data?: { publication?: { posts?: { edges?: Array<{ node: HashnodeEdgeNode }> } } };
@@ -148,8 +163,19 @@ type DevToArticle = {
 export async function fetchDevTo(username: string): Promise<UnifiedPost[]> {
   const { signal, clear } = withTimeout();
   try {
-    const url = 'https://dev.to/api/articles?username=' + encodeURIComponent(username) + '&per_page=20';
-    const res = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+    // _t cache-buster + cache: 'no-store' defeat the conditional-GET that
+    // was returning 304 with an empty body.
+    const url =
+      'https://dev.to/api/articles?username=' +
+      encodeURIComponent(username) +
+      '&per_page=20&_t=' + Date.now();
+    const res = await fetch(url, {
+      signal,
+      mode: 'cors',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (res.status === 304) return [];
     if (!res.ok) throw new Error('devto http ' + res.status);
     const items = (await res.json()) as DevToArticle[];
     if (!Array.isArray(items)) return [];
@@ -205,8 +231,12 @@ export async function fetchMedium(username: string): Promise<UnifiedPost[]> {
   const { signal, clear } = withTimeout();
   try {
     const feed = 'https://medium.com/feed/@' + username;
-    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed);
-    const res = await fetch(url, { signal });
+    const url =
+      'https://api.rss2json.com/v1/api.json?rss_url=' +
+      encodeURIComponent(feed) +
+      '&_t=' + Date.now();
+    const res = await fetch(url, { signal, mode: 'cors', cache: 'no-store' });
+    if (res.status === 304) return [];
     if (!res.ok) throw new Error('medium http ' + res.status);
     const json = (await res.json()) as { items?: MediumRssItem[]; status?: string };
     if (json?.status && json.status !== 'ok') return [];

@@ -1,5 +1,14 @@
 /**
- * useUnifiedPosts: merges local MDX posts with live external feeds.
+ * useUnifiedPosts: merges local MDX posts with live external feeds and
+ * keeps them in sync without leaning on the localStorage cache too long.
+ *
+ * Behavior:
+ *  - On mount, immediately render whatever's in the cache so the page never
+ *    flashes empty.
+ *  - Fire a fresh fetch in the background.
+ *  - When the tab regains focus or becomes visible, refetch again. That's
+ *    how a newly-published Dev.to / Hashnode / Medium post shows up without
+ *    the user needing a hard reload.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -88,26 +97,37 @@ export function useUnifiedPosts(localPosts: UnifiedPost[]): LoadState {
   const [loading, setLoading] = useState<boolean>(true);
   const [errored, setErrored] = useState<UnifiedPostSource[]>([]);
   const mountedRef = useRef(true);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
-    let cancelled = false;
 
-    (async () => {
-      const results = await Promise.allSettled(
-        EXTERNAL_SOURCES.map((src) => fetchSource(src))
-      );
-      if (cancelled || !mountedRef.current) return;
+    const loadAll = async () => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+      try {
+        const results = await Promise.allSettled(
+          EXTERNAL_SOURCES.map((src) => fetchSource(src))
+        );
+        if (!mountedRef.current) return;
 
-      const next: UnifiedPost[] = [];
-      const failed: UnifiedPostSource[] = [];
+        const next: UnifiedPost[] = [];
+        const failed: UnifiedPostSource[] = [];
 
-      results.forEach((r, i) => {
-        const src = EXTERNAL_SOURCES[i];
-        if (r.status === 'fulfilled') {
-          if (r.value.posts.length > 0) {
-            next.push(...r.value.posts);
-            writeCache(src.kind, identifierOf(src), r.value.posts);
+        results.forEach((r, i) => {
+          const src = EXTERNAL_SOURCES[i];
+          if (r.status === 'fulfilled') {
+            if (r.value.posts.length > 0) {
+              next.push(...r.value.posts);
+              writeCache(src.kind, identifierOf(src), r.value.posts);
+            } else {
+              const cached = readCachedFor(src.kind, identifierOf(src));
+              if (cached.length > 0) {
+                next.push(...cached);
+              } else {
+                failed.push(src.kind);
+              }
+            }
           } else {
             const cached = readCachedFor(src.kind, identifierOf(src));
             if (cached.length > 0) {
@@ -116,24 +136,40 @@ export function useUnifiedPosts(localPosts: UnifiedPost[]): LoadState {
               failed.push(src.kind);
             }
           }
-        } else {
-          const cached = readCachedFor(src.kind, identifierOf(src));
-          if (cached.length > 0) {
-            next.push(...cached);
-          } else {
-            failed.push(src.kind);
-          }
-        }
-      });
+        });
 
-      setExternalPosts(next);
-      setErrored(failed);
-      setLoading(false);
-    })();
+        setExternalPosts(next);
+        setErrored(failed);
+        setLoading(false);
+      } finally {
+        inFlightRef.current = false;
+      }
+    };
+
+    // initial fetch
+    void loadAll();
+
+    // refetch when tab regains focus / becomes visible — so a freshly
+    // published external post appears without a hard reload.
+    const onVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      void loadAll();
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisible);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', onVisible);
+    }
 
     return () => {
-      cancelled = true;
       mountedRef.current = false;
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisible);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', onVisible);
+      }
     };
   }, []);
 
