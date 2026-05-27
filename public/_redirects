@@ -1,1 +1,8 @@
-/* /index.html 200
+# Same-origin proxies for the blog aggregator.
+# These MUST come before the SPA fallback (top-to-bottom matching).
+/api/blog/devto    https://dev.to/api/articles            200
+/api/blog/medium   https://api.rss2json.com/v1/api.json   200
+
+# SPA fallback — every unknown path serves index.html so React Router
+# handles client-side routing.
+/*    /index.html   200

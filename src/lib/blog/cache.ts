@@ -10,7 +10,7 @@
 type Entry<T> = { data: T; ts: number };
 
 const TTL_MS = 5 * 60 * 1000;
-const KEY_PREFIX = 'parv.blog.cache.v5';
+const KEY_PREFIX = 'parv.blog.cache.v6';
 
 function safeGet(): Storage | null {
   try {
