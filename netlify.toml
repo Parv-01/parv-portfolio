@@ -1,9 +1,7 @@
-# Netlify deploy config for parv-portfolio-new.
+# Netlify deploy config for parv-portfolio.
 #
 # SPA fallback — every unknown path serves index.html so React Router can
 # handle client-side routing (otherwise /blog/post-name 404s on hard refresh).
-#
-# Build: Netlify runs `npm install` automatically, then the build command.
 
 [build]
   command = "npm run build"
@@ -11,6 +9,34 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# ---------------------------------------------------------------------------
+# Same-origin proxies for the blog aggregator.
+#
+# Without these, the browser issues cross-origin fetches from
+# https://parvagarwal.is-a.dev to dev.to / rss2json.com and those services
+# either rate-limit by Referer or block production HTTPS origins.
+#
+# With these, the browser hits parvagarwal.is-a.dev/api/blog/... — same
+# origin, no preflight, no CORS. Netlify's edge fetches upstream.
+# IMPORTANT: these must appear BEFORE the SPA fallback.
+#
+# Note: Hashnode is not proxied here — Hashnode retired free GraphQL API
+# access on 2026-05-13. Hashnode posts are maintained manually in
+# src/content/blog/hashnode-posts.ts.
+# ---------------------------------------------------------------------------
+
+[[redirects]]
+  from = "/api/blog/devto"
+  to = "https://dev.to/api/articles"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/blog/medium"
+  to = "https://api.rss2json.com/v1/api.json"
+  status = 200
+  force = true
 
 # SPA fallback for React Router
 [[redirects]]
@@ -24,7 +50,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Cache GLB / audio assets — they're large and stable
+# Cache GLB / audio assets — large and stable
 [[headers]]
   for = "/models/*"
   [headers.values]

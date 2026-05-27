@@ -2,20 +2,38 @@
  * Runtime fetchers for external blog feeds. Each returns Promise<UnifiedPost[]>
  * and never throws — failures/timeouts/malformed payloads resolve to [].
  *
- * Notes on the hardening:
- *  - `cache: 'no-store'` + `_t=<timestamp>` query bust both browser HTTP cache
- *    and any conditional-GET path that returns 304 with an empty body.
- *  - `mode: 'cors'` + `redirect: 'follow'` makes the Hashnode call survive its
- *    301 -> canonical-URL redirect with CORS headers preserved.
- *  - Every fetcher short-circuits a 304 to [] so res.json() never blows up.
+ * Production routes Dev.to and Medium through same-origin Netlify proxies
+ * (/api/blog/...) so the browser doesn't issue cross-origin requests. Local
+ * dev hits upstreams directly. See netlify.toml for the proxy rules.
+ *
+ * Hashnode: not fetched at runtime. Hashnode retired free GraphQL API access
+ * on 2026-05-13 and their RSS feeds sit behind a Cloudflare bot challenge.
+ * Hashnode posts come from a hand-maintained file at
+ * src/content/blog/hashnode-posts.ts — edit that file when you publish.
  */
 
 import { PAYWALLED_MEDIUM_SLUGS } from './paywalled-slugs';
+import { HASHNODE_POSTS } from '@/content/blog/hashnode-posts';
 import type { UnifiedPost } from './types';
 
-const TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 8000;
 const FIVE_YEARS_MS = 5 * 365 * 24 * 60 * 60 * 1000;
 const WPM = 200;
+
+function isLocalhost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h.endsWith('.local');
+}
+
+function endpoint(kind: 'devto' | 'medium'): string {
+  if (isLocalhost()) {
+    if (kind === 'devto') return 'https://dev.to/api/articles';
+    return 'https://api.rss2json.com/v1/api.json';
+  }
+  if (kind === 'devto') return '/api/blog/devto';
+  return '/api/blog/medium';
+}
 
 function withTimeout(): { signal: AbortSignal; clear: () => void } {
   const ctrl = new AbortController();
@@ -51,12 +69,6 @@ function normalizeTags(tags: unknown): string[] {
     if (typeof t === 'string') {
       const v = t.trim().toLowerCase();
       if (v) out.push(v);
-    } else if (t && typeof t === 'object' && 'name' in (t as Record<string, unknown>)) {
-      const name = (t as { name?: unknown }).name;
-      if (typeof name === 'string') {
-        const v = name.trim().toLowerCase();
-        if (v) out.push(v);
-      }
     }
   }
   return Array.from(new Set(out));
@@ -79,7 +91,7 @@ function isRecent(iso: string): boolean {
 
 function urlSlug(url: string): string {
   try {
-    const u = new URL(url);
+    const u = new URL(url, 'https://example.com');
     const parts = u.pathname.split('/').filter(Boolean);
     return (parts[parts.length - 1] || '').toLowerCase();
   } catch {
@@ -87,67 +99,31 @@ function urlSlug(url: string): string {
   }
 }
 
-type HashnodeEdgeNode = {
-  id: string;
-  slug: string;
-  title: string;
-  brief?: string;
-  publishedAt: string;
-  readTimeInMinutes?: number;
-  tags?: Array<{ name: string }>;
-  url: string;
-};
+// ---------------------------------------------------------------------------
+// Hashnode — manual list (Hashnode killed free API access on 2026-05-13).
+// Returns immediately; not a real fetch but keeps the call-site symmetric.
+// ---------------------------------------------------------------------------
 
-export async function fetchHashnode(host: string): Promise<UnifiedPost[]> {
-  const { signal, clear } = withTimeout();
-  try {
-    // Trailing slash + redirect: 'follow' avoids the 301 that strips CORS.
-    const res = await fetch('https://gql.hashnode.com/', {
-      method: 'POST',
-      signal,
-      mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        query: 'query Posts($host: String!) { publication(host: $host) { posts(first: 20) { edges { node { id slug title brief publishedAt readTimeInMinutes tags { name } url } } } } }',
-        variables: { host },
-      }),
-    });
-    if (res.status === 304) return [];
-    if (!res.ok) throw new Error('hashnode http ' + res.status);
-    const json = (await res.json()) as {
-      data?: { publication?: { posts?: { edges?: Array<{ node: HashnodeEdgeNode }> } } };
-    };
-    const edges = json?.data?.publication?.posts?.edges ?? [];
-    return edges
-      .map(({ node }) => {
-        if (!node?.url || !node?.publishedAt || !isRecent(node.publishedAt)) return null;
-        return {
-          id: 'hashnode:' + node.id,
-          slug: node.slug,
-          title: node.title,
-          excerpt: makeExcerpt(node.brief ?? ''),
-          date: node.publishedAt,
-          readTime: readTimeFromBody(node.brief ?? '', node.readTimeInMinutes),
-          tags: normalizeTags(node.tags ?? []),
-          source: 'hashnode',
-          href: node.url,
-          external: true,
-          platformLabel: 'HASHNODE',
-        } as UnifiedPost;
-      })
-      .filter((p): p is UnifiedPost => p !== null);
-  } catch (e) {
-    console.warn('[blog] hashnode fetch failed', e);
-    return [];
-  } finally {
-    clear();
-  }
+export async function fetchHashnode(_host: string): Promise<UnifiedPost[]> {
+  return HASHNODE_POSTS.filter((p) => isRecent(p.date)).map((p) => ({
+    id: 'hashnode:' + p.id,
+    slug: p.id,
+    title: p.title,
+    excerpt: p.excerpt,
+    date: p.date,
+    readTime: p.readTime,
+    tags: normalizeTags(p.tags),
+    source: 'hashnode',
+    href: p.url,
+    external: true,
+    paywalled: p.paywalled === true ? true : undefined,
+    platformLabel: 'HASHNODE',
+  }));
 }
+
+// ---------------------------------------------------------------------------
+// Dev.to
+// ---------------------------------------------------------------------------
 
 type DevToArticle = {
   id: number;
@@ -163,19 +139,13 @@ type DevToArticle = {
 export async function fetchDevTo(username: string): Promise<UnifiedPost[]> {
   const { signal, clear } = withTimeout();
   try {
-    // _t cache-buster + cache: 'no-store' defeat the conditional-GET that
-    // was returning 304 with an empty body.
+    const base = endpoint('devto');
+    const sep = base.includes('?') ? '&' : '?';
     const url =
-      'https://dev.to/api/articles?username=' +
-      encodeURIComponent(username) +
+      base + sep +
+      'username=' + encodeURIComponent(username) +
       '&per_page=20&_t=' + Date.now();
-    const res = await fetch(url, {
-      signal,
-      mode: 'cors',
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    });
-    if (res.status === 304) return [];
+    const res = await fetch(url, { signal, cache: 'no-store' });
     if (!res.ok) throw new Error('devto http ' + res.status);
     const items = (await res.json()) as DevToArticle[];
     if (!Array.isArray(items)) return [];
@@ -205,6 +175,10 @@ export async function fetchDevTo(username: string): Promise<UnifiedPost[]> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Medium
+// ---------------------------------------------------------------------------
+
 type MediumRssItem = {
   guid?: string;
   link?: string;
@@ -231,12 +205,13 @@ export async function fetchMedium(username: string): Promise<UnifiedPost[]> {
   const { signal, clear } = withTimeout();
   try {
     const feed = 'https://medium.com/feed/@' + username;
+    const base = endpoint('medium');
+    const sep = base.includes('?') ? '&' : '?';
     const url =
-      'https://api.rss2json.com/v1/api.json?rss_url=' +
-      encodeURIComponent(feed) +
+      base + sep +
+      'rss_url=' + encodeURIComponent(feed) +
       '&_t=' + Date.now();
-    const res = await fetch(url, { signal, mode: 'cors', cache: 'no-store' });
-    if (res.status === 304) return [];
+    const res = await fetch(url, { signal, cache: 'no-store' });
     if (!res.ok) throw new Error('medium http ' + res.status);
     const json = (await res.json()) as { items?: MediumRssItem[]; status?: string };
     if (json?.status && json.status !== 'ok') return [];
