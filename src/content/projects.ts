@@ -62,4 +62,20 @@ export const projects: Project[] = [
   },
   highlight: 'Personal Knowledge Base ',
 },
+  {
+    id: 'gpualert',
+    title: 'GPUAlert',
+    description:
+      'A zero-instrumentation process-boundary monitor that diagnoses GPU training-job failures and emails structured notifications with classified failure causes, durable logs, and output artifacts.',
+    longDescription:
+      'GPU training jobs fail often — roughly two in five on large production clusters — yet the operator typically learns of a failure only by reconnecting hours later. GPUAlert is a command-line wrapper that monitors any training command at the process boundary, requiring no code changes, no imports, no accounts, and no connectivity beyond an SMTP relay. On completion it emails a structured notification carrying a classified failure cause (OOM, NCCL timeout, NaN divergence, CUDA errors, etc.), durable logs, and output artifacts. It is complementary to existing MLOps platforms rather than competing: it needs zero instrumentation and works with any framework.',
+    stack: ['Python', 'SMTP', 'Process Monitoring', 'CLI', 'GPU/CUDA'],
+    status: 'active',
+    tags: ['MLOps', 'GPU', 'Systems', 'Monitoring', 'Deep Learning'],
+    links: {
+      github: 'https://github.com/Parv-01/gpualert',
+      paper: 'https://arxiv.org/abs/2607.01409',
+    },
+    highlight: 'arXiv 2607.01409 · IIT Patna',
+  },
   ];

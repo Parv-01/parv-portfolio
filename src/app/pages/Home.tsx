@@ -196,9 +196,10 @@ export function Home() {
       </Section>
 
       <Section>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard label="LinkedIn Connections" value={11000} suffix="+" />
           <StatCard label="Patent Published" value={1} />
+          <StatCard label="Research Papers" value={1} />
           <StatCard label="Quantum Research Tours" value={6} suffix="+" />
           <StatCard label="Global Rank · NYUAD" value={3} prefix="#" />
         </div>
@@ -316,6 +317,7 @@ export function Home() {
                 <div className="h-px" style={{ background: 'var(--border-hairline)' }} />
                 <div className="grid grid-cols-2 gap-y-3 gap-x-6">
                   <Stat label="Patent" value="1 published" />
+                  <Stat label="Research Papers" value="1 · arXiv" />
                   <Stat label="Hackathon" value="World 3rd" />
                   <Stat label="Quantum Research Tours" value="6+" />
                   <Stat label="LinkedIn Connections" value="11k+" />

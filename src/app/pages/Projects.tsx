@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Search, SlidersHorizontal, X, Github, FileText, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Github, FileText, ArrowUpRight, Sparkles, ExternalLink, BookOpen } from 'lucide-react';
 import { Section } from '../components/layout/Section';
 import { PageHero } from '../components/layout/PageHero';
 import { ProjectCard } from '../components/cards/ProjectCard';
+import { SpotlightCard } from '../components/system/SpotlightCard';
 import { projects, type Project } from '@/content/projects';
+import { publications } from '@/content/publications';
 
 const statusFilters = ['all', 'active', 'experimental', 'archived'] as const;
 
@@ -189,6 +191,173 @@ export function Projects() {
           )}
         </div>
       </Section>
+
+      {/* ── Research Publications ── */}
+      {publications.length > 0 && (
+        <Section background="transparent">
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-2">
+              <span
+                className="uppercase tracking-[0.18em]"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  color: 'var(--accent)',
+                }}
+              >
+                Research Publications
+              </span>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.75rem',
+                  fontWeight: 500,
+                  lineHeight: 1.25,
+                  letterSpacing: '-0.015em',
+                  color: 'var(--fg-primary)',
+                }}
+              >
+                Published work
+              </h2>
+              <p style={{ fontSize: '0.9375rem', lineHeight: 1.7, color: 'var(--fg-secondary)', maxWidth: '42rem' }}>
+                Peer-reviewed papers and preprints from research at IIT Patna and beyond.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {publications.map((pub, i) => (
+                <motion.div
+                  key={pub.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.42, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <SpotlightCard variant="glass" className="p-6">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span
+                          className="inline-flex items-center gap-1.5"
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.6875rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: 'var(--fg-muted)',
+                          }}
+                        >
+                          <BookOpen size={12} />
+                          {pub.venue} · {pub.year}
+                        </span>
+                        {pub.highlight && (
+                          <>
+                            <span className="w-1 h-1 rounded-full" style={{ background: 'var(--fg-faint)' }} />
+                            <span
+                              className="inline-flex items-center gap-1"
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '0.6875rem',
+                                color: 'var(--accent)',
+                              }}
+                            >
+                              <Sparkles size={10} />
+                              {pub.highlight}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <h3
+                        style={{
+                          fontFamily: 'var(--font-serif)',
+                          fontSize: '1.375rem',
+                          fontWeight: 500,
+                          lineHeight: 1.3,
+                          letterSpacing: '-0.015em',
+                          color: 'var(--fg-primary)',
+                        }}
+                      >
+                        {pub.title}
+                      </h3>
+
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.8125rem',
+                          color: 'var(--fg-secondary)',
+                        }}
+                      >
+                        {pub.authors.join(', ')}
+                      </p>
+
+                      <p style={{ fontSize: '0.9375rem', lineHeight: 1.7, color: 'var(--fg-secondary)' }}>
+                        {pub.abstract}
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {pub.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 rounded-md"
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '0.6875rem',
+                              background: 'var(--bg-chip)',
+                              color: 'var(--fg-secondary)',
+                              border: '1px solid var(--border-hairline)',
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div
+                        className="flex items-center gap-3 pt-3 flex-wrap"
+                        style={{ borderTop: '1px solid var(--border-hairline)' }}
+                      >
+                        {pub.links.arxiv && (
+                          <a
+                            href={pub.links.arxiv}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1.5 no-underline transition-colors duration-200"
+                            style={{ fontSize: '0.8125rem', color: 'var(--fg-secondary)' }}
+                          >
+                            <ExternalLink size={13} /> arXiv
+                          </a>
+                        )}
+                        {pub.links.pdf && (
+                          <a
+                            href={pub.links.pdf}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1.5 no-underline transition-colors duration-200"
+                            style={{ fontSize: '0.8125rem', color: 'var(--fg-secondary)' }}
+                          >
+                            <FileText size={13} /> PDF
+                          </a>
+                        )}
+                        {pub.links.github && (
+                          <a
+                            href={pub.links.github}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1.5 no-underline transition-colors duration-200"
+                            style={{ fontSize: '0.8125rem', color: 'var(--fg-secondary)' }}
+                          >
+                            <Github size={13} /> Code
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </SpotlightCard>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Section>
+      )}
 
       <AnimatePresence>
         {selectedProject && (

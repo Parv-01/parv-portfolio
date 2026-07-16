@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { MapPin, Calendar, Award, BookOpen } from 'lucide-react';
+import { MapPin, Calendar, Award, BookOpen, FileText } from 'lucide-react';
 import { Section } from '../components/layout/Section';
 import { PageHero } from '../components/layout/PageHero';
 import { TimelineItem } from '../components/timeline/TimelineItem';
@@ -21,6 +21,7 @@ const badges = [
   { icon: Calendar, text: 'Joined IIT Patna · Jul 2025' },
   { icon: Award, text: 'Patent · Estimation of DEE using ML in Indian Obese Women' },
   { icon: BookOpen, text: 'World 3rd · NYUAD International Hackathon (Quantum)' },
+  { icon: FileText, text: 'arXiv · GPUAlert: Zero-Instrumentation GPU Failure Monitor' },
 ];
 
 export function About() {
