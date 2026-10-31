@@ -1,11 +1,12 @@
 import { motion } from 'motion/react';
-import { MapPin, Calendar, Award, BookOpen, FileText } from 'lucide-react';
+import { MapPin, Calendar, Award, BookOpen, FileText, Library, ArrowUpRight } from 'lucide-react';
 import { Section } from '../components/layout/Section';
 import { PageHero } from '../components/layout/PageHero';
 import { TimelineItem } from '../components/timeline/TimelineItem';
 import { SpotlightCard } from '../components/system/SpotlightCard';
 import { RevealOnScroll } from '../components/system/RevealOnScroll';
 import { timeline } from '@/content/timeline';
+import { BOOKSHELF_URL, READING_THEMES } from '@/content/bookshelf';
 
 const skills = {
   'Machine Learning': ['PyTorch', 'TensorFlow', 'Hugging Face', 'PEFT / LoRA', 'DAPT','scikit-learn', 'Evaluation'],
@@ -165,6 +166,73 @@ export function About() {
               </SpotlightCard>
             ))}
           </div>
+        </RevealOnScroll>
+      </Section>
+
+      <Section background="surface">
+        <RevealOnScroll className="flex flex-col gap-12">
+          <div className="flex flex-col gap-3" data-reveal>
+            <span
+              className="uppercase tracking-[0.2em]"
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 500, color: 'var(--accent)' }}
+            >
+              Off the clock
+            </span>
+            <h2
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 'clamp(1.875rem, 3vw, 2.5rem)',
+                fontWeight: 500,
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
+                color: 'var(--fg-primary)',
+              }}
+            >
+              Bookshelf
+            </h2>
+          </div>
+
+          <a
+            href={BOOKSHELF_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block max-w-[720px] group"
+            data-reveal
+          >
+            <SpotlightCard variant="glass" className="p-6 flex flex-col gap-5">
+              <div className="flex items-start gap-4">
+                <Library size={22} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
+                <p style={{ fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--fg-secondary)' }}>
+                  Outside the lab I read on how people think, decide and compete. My notes, highlights
+                  and chapter maps live in a public reading vault, grouped into five themes.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {READING_THEMES.map((theme) => (
+                  <span
+                    key={theme}
+                    className="px-2.5 py-1 rounded-md"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.75rem',
+                      background: 'var(--bg-chip)',
+                      color: 'var(--fg-secondary)',
+                      border: '1px solid var(--border-hairline)',
+                    }}
+                  >
+                    {theme}
+                  </span>
+                ))}
+              </div>
+              <span
+                className="inline-flex items-center gap-1.5"
+                style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--accent)' }}
+              >
+                Open the reading vault
+                <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </span>
+            </SpotlightCard>
+          </a>
         </RevealOnScroll>
       </Section>
     </div>
