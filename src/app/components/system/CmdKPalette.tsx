@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Compass,
   FileDown,
+  Library,
   Github,
   Linkedin,
   Mail,
@@ -12,6 +13,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { audioManager } from '@/audio/AudioManager';
+import { BOOKSHELF_URL } from '@/content/bookshelf';
 
 type Action = {
   id: string;
@@ -60,6 +62,14 @@ export function CmdKPalette() {
         group: 'Profile',
         icon: Linkedin,
         run: () => window.open('https://www.linkedin.com/in/parvagarwal', '_blank', 'noopener,noreferrer'),
+      },
+      {
+        id: 'bookshelf',
+        label: 'Open Bookshelf',
+        hint: 'Reading vault on Notion',
+        group: 'Profile',
+        icon: Library,
+        run: () => window.open(BOOKSHELF_URL, '_blank', 'noopener,noreferrer'),
       },
       {
         id: 'resume',
